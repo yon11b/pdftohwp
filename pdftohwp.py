@@ -170,6 +170,9 @@ def problem_insert(num):
         content = re.sub(r'(\b\w+\b)(\s+\1)+', r'\1', text)
         length += len(content)
         for i in range(length):
+            isAnswer = ''.join(content[i : i+6])
+            if isAnswer=='정답과 해설':
+                return -1
             contentNum = 0
             try:
                 if content[i] == str(num1) and content[i+1]=='.':
@@ -186,9 +189,11 @@ def problem_insert(num):
                 while True:
                     j+=1
                     try:
-                        if content[j] == str(num+1)and content[j+1]=='.':       # 문제번호가 한 자리 수일 때
+                        if content[j] == str(num+1) and content[j+1]=='.':       # 문제번호가 한 자리 수일 때
                             break
-                        if content[j] in digits and content[j+1] in digits and content[j+2] == '.':      # 문제번호가 두 자리 수일 때
+                        isTwoDigit = ''.join(content[j:j+2])
+                        if  isTwoDigit== str(num+1) and content[j+2] == '.':
+                        #if content[j] in digits and content[j+1] in digits and content[j+2] == '.':      # 문제번호가 두 자리 수일 때
                             break
                     except:
                          break
