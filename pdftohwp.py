@@ -23,23 +23,29 @@ def input_file_name():
     # 키워드를 포함한 파일 찾기
     matching_files = [file for file in files if keyword in file]
     return matching_files
-PATH='PATH/TO/YOUR/FOLDER'
+PATH=''
 PROBLEM_PATH=os.path.join(PATH, '문제파일')
 # 폴더가 없으면 생성
 os.makedirs(PROBLEM_PATH, exist_ok=True)
 matching_files = input_file_name()
 # 결과 출력
 if matching_files:
-    print("찾은 파일:")
-    for file in matching_files:
+    print("<찾은 파일>")
+    if len(matching_files) == 1:
+        file = matching_files[0]
         print(file)
-        if len(matching_files) == 1:
-            PDF_FILE_PATH=os.path.join(PROBLEM_PATH, file)
-            FILE_NAME = file
-        else:
-            matching_files = input_file_name()
+        PDF_FILE_PATH=os.path.join(PROBLEM_PATH, file)
+        FILE_NAME = file
+    else:
+        print()
+        for idx, file in enumerate(matching_files):
+            print(f'{idx+1}. {file}')
+        fileIdx = int(input("변환하고 싶은 파일의 번호를 입력하세요: "))
+        PDF_FILE_PATH =os.path.join(PROBLEM_PATH, matching_files[fileIdx - 1])
+        FILE_NAME = matching_files[fileIdx - 1]
 else:
     print("파일을 찾을 수 없습니다.")
+    matching_files = input_file_name()
 page=0
 # 1. pdf파일을 png 파일로 변환하여 저장
 print('PDF 파일 읽는 중...')
@@ -47,10 +53,12 @@ doc = fitz.open(PDF_FILE_PATH)
 input_dir = os.path.join(PATH, 'input_image')
 # 폴더가 없으면 생성
 os.makedirs(input_dir, exist_ok=True)
+p = 0
 for i, page in enumerate(doc):
     img = page.get_pixmap()
     img.save(os.path.join(input_dir, f'{i}_{FILE_NAME}.png'))
-    page=i
+    p+=1
+page=p
 # 추출한 텍스트 저장할 txt 파일 생성
 # text 폴더 경로
 text_dir = os.path.join(PATH, 'text')
@@ -66,6 +74,7 @@ os.makedirs(output_dir, exist_ok=True)
 # 2. png 파일을 다단 두 개로 나누어 저장
 # 이미지 파일 열기
 print('이미지를 텍스트로 변환  중...')
+
 for i in range(page):
     image_path = os.path.join(input_dir, f'{i}_{FILE_NAME}.png') # 원본 이미지 파일 경로
     image = Image.open(image_path)
@@ -83,8 +92,8 @@ for i in range(page):
     # 결과 이미지 저장
     new_image.save(os.path.join(output_dir, f'{i}_{FILE_NAME}.png'))  # 결과 파일 경로
     # 3. png 파일에서 텍스트 추출하기(네이버 클로버 ocr)
-    api_url = 'YOUR_API_URL'
-    secret_key = 'YOUR_SECRET_KEY'
+    api_url = ''
+    secret_key = ''
     image_file = os.path.join(output_dir, f'{i}_{FILE_NAME}.png')
     request_json = {
         'images': [
@@ -105,6 +114,7 @@ for i in range(page):
       'X-OCR-SECRET': secret_key
     }
     response = requests.request("POST", api_url, headers=headers, data = payload, files = files)
+ 
     print(f'{i+1} 페이지 완료...')
     # 4. 추출한 텍스트를 txt 파일에 저장
     for i in response.json()['images'][0]['fields']:
@@ -129,6 +139,7 @@ digits= [str(i) for i in range(0,10)]
 def is십사(strNum):
     if strNum == '1' or strNum=='2':
         return True
+
 TEXT_PATH=os.path.join(PATH, 'text')
 # 폴더가 없으면 생성
 os.makedirs(TEXT_PATH, exist_ok=True)
@@ -161,27 +172,26 @@ def problem_insert(num):
         for i in range(length):
             contentNum = 0
             try:
-                if content[i] == str(num1):
+                if content[i] == str(num1) and content[i+1]=='.':
                     contentNum = int(content[i])
-                if content[i] == str(num1) and content[i+1] == str(num2):
+                if content[i] == str(num1) and content[i+1] == str(num2) and content[i+2]=='.':
                     contentNum = int(content[i])*10 + int(content[i+1])
                     i+=1
             except:
                 break
-            if contentNum == num and content[i+1] =='.' :
-                if i > 0:
-                    if (num // 10==0 and is십사(content[i-1])):
-                        continue
+            if i > 0 and contentNum == num:
+                if (num // 10==0 and is십사(content[i-1])):
+                    continue
                 j=i+1
                 while True:
                     j+=1
                     try:
-                        if str(num+1)==content[j] and content[j+1]=='.':       # 문제번호가 한 자리 수일 때
+                        if content[j] == str(num+1)and content[j+1]=='.':       # 문제번호가 한 자리 수일 때
                             break
                         if content[j] in digits and content[j+1] in digits and content[j+2] == '.':      # 문제번호가 두 자리 수일 때
                             break
                     except:
-                        break
+                         break
                 problems[num-1].append(content[i+2:j])
                 text=problems[num-1][0]
                 # 정규 표현식으로 불필요한 문자들 제거
@@ -201,11 +211,14 @@ def insert_fields():
     start = int(input('시작 id를 입력해주세요: '))
     count = int(input('몇 개의 id를 생성할까요?: '))
     start_idx=0
-    # (커스텀) 문제 시작 위치:  중간
-    # num = int(input('문제 시작 번호를 입력하세요: '))
-    # num-=1
-    # (커스텀) 문제 시작 위치:  처음(기본)
-    num = 0
+    wheretostart = int(input('처음부터 시작하시겠습니까? 맞으면 1, 아니면 2를 입력해주세요: '))
+    if wheretostart==2:
+        # (커스텀) 문제 시작 위치:  중간
+        num = int(input('문제 시작 번호를 입력하세요: '))
+        num-=1
+    else:
+        # (커스텀) 문제 시작 위치:  처음(기본)
+        num = 0
     for i in range(start, start + count):
         num +=1
         # 필드 템플릿 삽입 (ID)
