@@ -25,27 +25,33 @@ def input_file_name():
     return matching_files
 PATH=''
 PROBLEM_PATH=os.path.join(PATH, '문제파일')
+PDF_FILE_PATH=''
+FILE_NAME=''
 # 폴더가 없으면 생성
 os.makedirs(PROBLEM_PATH, exist_ok=True)
-matching_files = input_file_name()
-# 결과 출력
-if matching_files:
-    print("<찾은 파일>")
-    if len(matching_files) == 1:
-        file = matching_files[0]
-        print(file)
-        PDF_FILE_PATH=os.path.join(PROBLEM_PATH, file)
-        FILE_NAME = file
-    else:
-        print()
-        for idx, file in enumerate(matching_files):
-            print(f'{idx+1}. {file}')
-        fileIdx = int(input("변환하고 싶은 파일의 번호를 입력하세요: "))
-        PDF_FILE_PATH =os.path.join(PROBLEM_PATH, matching_files[fileIdx - 1])
-        FILE_NAME = matching_files[fileIdx - 1]
-else:
-    print("파일을 찾을 수 없습니다.")
+
+def find_file():
+    global PDF_FILE_PATH
+    global FILE_NAME
     matching_files = input_file_name()
+    if matching_files:
+        print("<찾은 파일>")
+        if len(matching_files) == 1:
+            file = matching_files[0]
+            print(file)
+            PDF_FILE_PATH=os.path.join(PROBLEM_PATH, file)
+            FILE_NAME = file
+        else:
+            print()
+            for idx, file in enumerate(matching_files):
+                print(f'{idx+1}. {file}')
+            fileIdx = int(input("변환하고 싶은 파일의 번호를 입력하세요: "))
+            PDF_FILE_PATH =os.path.join(PROBLEM_PATH, matching_files[fileIdx - 1])
+            FILE_NAME = matching_files[fileIdx - 1]
+    else:
+        print("파일을 찾을 수 없습니다.")
+        find_file()
+find_file()
 page=0
 # 1. pdf파일을 png 파일로 변환하여 저장
 print('PDF 파일 읽는 중...')
