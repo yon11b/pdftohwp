@@ -140,6 +140,7 @@ f.close()
 hwp = win32.gencache.EnsureDispatch('HWPFrame.HwpObject')
 hwp.Run("FileNew")
 problems = [[] for _ in range(40)]
+answer_list = [[] for _ in range(40)]
 numbers = [str(i) for i in range(1, 40)]
 digits= [str(i) for i in range(0,10)]
 def is십사(strNum):
@@ -149,8 +150,8 @@ def is십사(strNum):
 TEXT_PATH=os.path.join(PATH, 'text')
 # 폴더가 없으면 생성
 os.makedirs(TEXT_PATH, exist_ok=True)
-FILE_NAME = os.path.join(TEXT_PATH, FILE_NAME)
-FILE_NAME = FILE_NAME+'.txt'
+TEXT_FILE_PATH = os.path.join(TEXT_PATH, FILE_NAME)
+TEXT_FILE_PATH = TEXT_FILE_PATH+'.txt'
 def write(s):
     try:
         # UTF-8 인코딩을 고려하여 텍스트 삽입
@@ -162,8 +163,9 @@ def write(s):
     except Exception as e:
         print(f"Error inserting text: {e}")
 def problem_insert(num):
+    global TEXT_FILE_PATH
     text_path = os.path.join(PATH, 'text')
-    doc = fitz.open(FILE_NAME)
+    doc = fitz.open(TEXT_FILE_PATH)
     contentNum = 0
     length=0
     num1=num
@@ -174,11 +176,12 @@ def problem_insert(num):
     for page in doc:
         text = page.get_text()
         content = re.sub(r'(\b\w+\b)(\s+\1)+', r'\1', text)
-        length += len(content)
+        length = len(content)
         for i in range(length):
             isAnswer = ''.join(content[i : i+6])
             if isAnswer=='정답과 해설':
-                return -1
+                print('isAnswer: ', isAnswer)
+                return -1    
             contentNum = 0
             try:
                 if content[i] == str(num1) and content[i+1]=='.':
@@ -217,6 +220,80 @@ def problem_insert(num):
                 cleaned_text = cleaned_text.replace('((((', '(')
                 return cleaned_text
     return -1
+
+ANSWER_LIST=''
+
+def make_answer_list():
+    global TEXT_FILE_PATH
+    doc = fitz.open(TEXT_FILE_PATH)
+    contentNum = 0
+    length=0
+    answer_content=''
+    for page in doc:
+        text = page.get_text()
+        print(text[1:15])
+        content = re.sub(r'(\b\w+\b)(\s+\1)+', r'\1', text)
+        length = len(content)
+        print(length)
+        for i in range(length):
+            isAnswer = ''.join(content[i : i+6]) # 작동 안 함. 지금.
+            if i ==20:
+                print('isAnswer!!!!!!!!!!!!!: ', isAnswer)
+            if isAnswer=='정답과 해설':
+                print('isAnswer: ', isAnswer)
+                answer_content = content[i+6:]
+                print('answer_content: ', answer_content)
+                break
+        if answer_content:
+            break
+        else:
+            print("정답을 찾을 수 없습니다.")
+    length = len(answer_content)
+    num =1
+    num1=num
+    num2=0
+    for i in range(length):
+        try:
+            if answer_content[i] == str(num1) and answer_content[i+1]=='.':
+                contentNum = int(answer_content[i])
+            if answer_content[i] == str(num1) and answer_content[i+1] == str(num2) and answer_content[i+2]=='.':
+                contentNum = int(answer_content[i])*10 + int(answer_content[i+1])
+                i+=1
+        except:
+            break
+        if i > 0 and contentNum == num:
+            if (num // 10==0 and is십사(answer_content[i-1])):
+                continue
+            j=i+1
+            while True:
+                j+=1
+                try:
+                    if answer_content[j] == str(num+1) and answer_content[j+1]=='.':       # 문제번호가 한 자리 수일 때
+                        break
+                    isTwoDigit = ''.join(answer_content[j:j+2])
+                    if  isTwoDigit== str(num+1) and answer_content[j+2] == '.':
+                        break
+                except:
+                    break
+            answer_list[num].append(answer_content[i+2:j-1].strip())
+            print(answer_list)
+            num +=1
+            num1=num
+            num2=0
+            if num >=10:
+                num1=num//10
+                num2=num%10
+            i=j+1
+    return answer_list
+
+ANSWER_LIST=[]
+# 해당 문제번호(num)에 맞는 정답을 리턴하는 함수
+def answer_insert(num):
+    global ANSWER_LIST
+    if num ==1 :
+        ANSWER_LIST = make_answer_list()
+    return ANSWER_LIST[num][0]
+        
 def insert_fields():
     hwp.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule")
     start = int(input('시작 id를 입력해주세요: '))
@@ -257,12 +334,16 @@ def insert_fields():
         hwp.HParameterSet.HInsertFieldTemplate.TemplateDirection = "해설"
         hwp.HAction.Execute("InsertFieldTemplate", hwp.HParameterSet.HInsertFieldTemplate.HSet)
         hwp.HAction.Run("BreakPara")
+        answer = answer_insert(num)
+        write(answer)
         hwp.HAction.Run("BreakPara")
         # 필드 템플릿 삽입 (정답)
         hwp.HAction.GetDefault("InsertFieldTemplate", hwp.HParameterSet.HInsertFieldTemplate.HSet)
         hwp.HParameterSet.HInsertFieldTemplate.TemplateDirection = "정답"
         hwp.HAction.Execute("InsertFieldTemplate", hwp.HParameterSet.HInsertFieldTemplate.HSet)
         hwp.HAction.Run("BreakPara")
+        answer = answer_insert(num)
+        write(answer)        
         hwp.HAction.Run("BreakPara")
         # 페이지 나누기
         hwp.HAction.Run("BreakPage")
