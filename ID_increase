@@ -1,0 +1,47 @@
+function OnScriptMacro_script8()
+{
+var start ,i;
+start= START_NUMBER   //start=22100101;
+i=start;
+    for (i; i<start+100; i++){
+    	HAction.GetDefault("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	with (HParameterSet.HInsertFieldTemplate)
+    	{
+    		TemplateDirection = "ID";
+    	}
+    	HAction.Execute("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	HAction.Run("BreakPara");
+    	var textToInsert = i;
+    
+        // 현재 커서 위치에 텍스트 삽입
+        HAction.GetDefault("InsertText", HParameterSet.HInsertText.HSet);
+        HParameterSet.HInsertText.Text = textToInsert; // 삽입할 텍스트 설정
+        HAction.Execute("InsertText", HParameterSet.HInsertText.HSet);
+    	HAction.Run("BreakPara");
+    	HAction.GetDefault("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	with (HParameterSet.HInsertFieldTemplate)
+    	{
+    		TemplateDirection = "문제";
+    	}
+    	HAction.Execute("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	HAction.Run("BreakPara");
+    	HAction.Run("BreakPara");
+    	HAction.GetDefault("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	with (HParameterSet.HInsertFieldTemplate)
+    	{
+    		TemplateDirection = "해설";
+    	}
+    	HAction.Execute("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	HAction.Run("BreakPara");
+    	HAction.Run("BreakPara");
+    	HAction.GetDefault("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	with (HParameterSet.HInsertFieldTemplate)
+    	{
+    		TemplateDirection = "정답";
+    	}
+    	HAction.Execute("InsertFieldTemplate", HParameterSet.HInsertFieldTemplate.HSet);
+    	HAction.Run("BreakPara");
+	HAction.Run("BreakPara");
+    	HAction.Run("BreakPage");
+    }
+}
